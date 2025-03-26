@@ -78,7 +78,6 @@ class Player extends Entity{
     }
     public void iterateEffects(){
         for(Effect e:activeEffects){
-            System.out.println(e.effectType);
             e.apply(this);
         }
         if(health < 0){
