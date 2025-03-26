@@ -54,4 +54,18 @@ class Push extends Effect{
         effectEnded = true;
     }
 }
-
+class Heal extends Effect{
+    private int health;
+    public Heal(int healAmount){  
+        health = healAmount;
+    }
+    @Override
+    public void apply(Player p){
+        //catch case if the effectis done and not cleaned up
+        if(effectEnded) return;
+        p.health += health;
+        
+        //catch case if invalid direction
+        effectEnded = true;
+    }
+}

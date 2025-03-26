@@ -5,7 +5,13 @@ import java.awt.Graphics2D;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+
 import java.util.Arrays;
+import java.util.Random;
+
+import java.util.List;
+import java.util.ArrayList;
+
 
 class GameWindow {
     public static void main(String[] args) {
@@ -23,12 +29,52 @@ class GameWindow {
     }
 }
 
+class mazeGenerator{
+    private final int rows, cols;
+    private final Entity[][] map;
+    private final Random rand = new Random();
 
+    public mazeGenerator(int rows, int cols){
+        this.rows = rows;
+        this.cols = cols;
+        this.map = new Entity[rows][cols];
+        primsGenerator();
+    }
+    public Entity[][] getMaze(){
+        return map;
+    }
+    private void primsGenerator(){
+        for (int y = 0; y < rows; y++){
+            for(int x = 0; x < cols; x++){
+                map[y][x] = new Wall(x, y, 1, 1);
+            }
+        }
+        //ensure even starting point
+        int startX = rand.nextInt(cols/2) * 2;
+        int startY = rand.nextInt(rows/2) * 2;
+        List<int[]> frontier = new ArrayList<>();
+
+        
+    }
+    private void addFrontier(int x, int y, List<int[]> frontier){
+        for (int[] d : new int[][]{{-2, 0}, {2, 0}, {0, -2}, {0, 2}}) {
+            int newX = x + d[0];
+            int newY = y + d[0];
+            if(inBounds(newX, newY) && map[newX][newY] instanceof Wall){
+                frontier.add(new int[]{newX, newY});
+            }
+    }
+    private boolean inBounds(int x, int y) {
+        return x >= 0 && x < cols && y >= 0 && y < rows;
+    }
+
+}
 class GamePanel extends JPanel implements KeyListener {
     final int TILE_SIZE = 16;
     final int ROWS = 50;
     final int COLS = 75;
 
+    Random random = new Random();
     Entity[][] map = new Entity[ROWS][COLS];
     Player p;
 
@@ -40,7 +86,11 @@ class GamePanel extends JPanel implements KeyListener {
 
         initMap();
     }
+    private void primsInit(){
 
+
+
+    }
     private void initMap() {
         for (int y = 0; y < ROWS; y++) {
             for (int x = 0; x < COLS; x++) {
@@ -69,8 +119,6 @@ class GamePanel extends JPanel implements KeyListener {
                 g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
             }
         }
-        
-
 
         // draw player body
         g.setColor(p.color);
