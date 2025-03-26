@@ -6,7 +6,6 @@ import java.awt.event.*;
 
 
 import java.util.Arrays;
-import java.util.Random;
 
 
 
@@ -114,6 +113,7 @@ class GamePanel extends JPanel implements KeyListener {
 
         TrappedFloor tf = new TrappedFloor(4, 3, "heal");
         map[5][5] = new TrappedFloor(4, 3, "stick");
+        map[5][6] = new TrappedFloor(4, 3, "stick");
         map[6][5] = new TrappedFloor(4, 3, "fire");
         map[2][2] = new Goal(2, 2);
         
@@ -188,16 +188,22 @@ class GamePanel extends JPanel implements KeyListener {
 
         if(canMoveTo(newX, newY)){
             if(map[newY][newX].passable){
-                if (code == KeyEvent.VK_W)  p.move(movementVector);
+                boolean move = false;
+                if (code == KeyEvent.VK_W){
+                    move = true;
+                    
+                }
+                  
                 if (code == KeyEvent.VK_S){
+                    move = true;
                     movementVector[0] *= -1;
                     movementVector[1] *= -1;
-                    p.move(movementVector);
                 }
-            }
-            if(map[p.y][p.x] instanceof TrappedFloor){
-                System.out.println("Applying effect");
-                map[newY][newX].onStep(p);
+                if(move && p.moveable){
+                    p.move(movementVector);
+                    map[p.y][p.x].onStep(p);
+                }
+                
             }
             if(map[p.y][p.x] instanceof Goal){
                 String message = "Congratulations, you've solved the puzzle!";

@@ -78,6 +78,7 @@ class Player extends Entity{
     }
     public void iterateEffects(){
         for(Effect e:activeEffects){
+            System.out.println(e.effectType);
             e.apply(this);
         }
         if(health < 0){
@@ -126,7 +127,9 @@ class TrappedFloor extends Floor{
         }
     }
     //returns the effect which can be called by e.apply(Player p)
+    @Override
     public void onStep(Player p){
+        System.out.println("Adding effect");
         if(numUses == 0) return;
         
         numUses--;
