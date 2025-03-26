@@ -1,25 +1,60 @@
 package gamepkg;
 
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
+
 import java.util.Arrays;
 import java.util.Random;
 
-import java.util.List;
-import java.util.ArrayList;
 
 
 class GameWindow {
     public static void main(String[] args) {
+        startWindow();
+    }
+    public static void startWindow(){
+    // === Build input dialog ===
+        JTextField rowsField = new JTextField("20");
+        JTextField colsField = new JTextField("20");
+        JTextField seedField = new JTextField("5124");
+
+        JPanel inputPanel = new JPanel(new GridLayout(3, 3));
+        inputPanel.add(new JLabel("Rows:"));
+        inputPanel.add(rowsField);
+        inputPanel.add(new JLabel("Columns:"));
+        inputPanel.add(colsField);
+        inputPanel.add(new JLabel("Seed:"));
+        inputPanel.add(seedField);
+
+        int result = JOptionPane.showConfirmDialog(
+            null,
+            inputPanel,
+            "Enter Maze Size",
+            JOptionPane.OK_CANCEL_OPTION,
+            JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (result != JOptionPane.OK_OPTION) {
+            System.exit(0); // user cancelled
+        }
+
+        int rows, cols, seed;
+        try {
+            rows = Integer.parseInt(rowsField.getText());
+            cols = Integer.parseInt(colsField.getText());
+            seed = Integer.parseInt(seedField.getText());
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(null, "Invalid input. Please enter integers.");
+            return;
+        }
+
         JFrame frame = new JFrame("Maze Game");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(false);
 
-        GamePanel panel = new GamePanel();
+        GamePanel panel = new GamePanel(rows, cols, seed, frame);
         frame.add(panel);
         frame.pack();
         frame.setLocationRelativeTo(null);
@@ -29,69 +64,45 @@ class GameWindow {
     }
 }
 
-class mazeGenerator{
-    private final int rows, cols;
-    private final Entity[][] map;
-    private final Random rand = new Random();
 
-    public mazeGenerator(int rows, int cols){
-        this.rows = rows;
-        this.cols = cols;
-        this.map = new Entity[rows][cols];
-        primsGenerator();
-    }
-    public Entity[][] getMaze(){
-        return map;
-    }
-    private void primsGenerator(){
-        for (int y = 0; y < rows; y++){
-            for(int x = 0; x < cols; x++){
-                map[y][x] = new Wall(x, y, 1, 1);
-            }
-        }
-        //ensure even starting point
-        int startX = rand.nextInt(cols/2) * 2;
-        int startY = rand.nextInt(rows/2) * 2;
-        List<int[]> frontier = new ArrayList<>();
-
-        
-    }
-    private void addFrontier(int x, int y, List<int[]> frontier){
-        for (int[] d : new int[][]{{-2, 0}, {2, 0}, {0, -2}, {0, 2}}) {
-            int newX = x + d[0];
-            int newY = y + d[0];
-            if(inBounds(newX, newY) && map[newX][newY] instanceof Wall){
-                frontier.add(new int[]{newX, newY});
-            }
-    }
-    private boolean inBounds(int x, int y) {
-        return x >= 0 && x < cols && y >= 0 && y < rows;
-    }
-
-}
 class GamePanel extends JPanel implements KeyListener {
     final int TILE_SIZE = 16;
-    final int ROWS = 50;
-    final int COLS = 75;
+    private int ROWS;
+    private int COLS;
 
-    Random random = new Random();
-    Entity[][] map = new Entity[ROWS][COLS];
+    //Random random = new Random();
+    Entity[][] map;
     Player p;
+    JFrame frame;
+    int randomSeed = 0;
 
-    public GamePanel() {
+    public GamePanel(int rows, int cols, JFrame frame) {
+        this(rows, cols, 0, frame);
+        
+    }
+    public GamePanel(int rows, int cols, int seed, JFrame frame) {
+        this.frame = frame;
+        this.ROWS = rows;
+        this.COLS = cols;
+        this.randomSeed = seed;
+        map = new Entity[ROWS][COLS];
         this.setPreferredSize(new Dimension(COLS * TILE_SIZE, ROWS * TILE_SIZE));
         this.setBackground(Color.BLACK);
         this.setFocusable(true);
         this.addKeyListener(this);
 
-        initMap();
+        primsInit();
     }
+    
+
     private void primsInit(){
 
-
+        mazeGenerator m = new mazeGenerator(ROWS, COLS, randomSeed);
+        map = m.getMaze();
+        p = new Player(m.startX, m.startY);
 
     }
-    private void initMap() {
+    private void demoMapInit() {
         for (int y = 0; y < ROWS; y++) {
             for (int x = 0; x < COLS; x++) {
                 map[y][x] = new Floor(x, y, 1, 1);
@@ -99,8 +110,14 @@ class GamePanel extends JPanel implements KeyListener {
         }
 
         // add walls
-        map[3][3] = new Wall(3, 3, 1, 1);
-        map[4][4] = new TrappedFloor(4, 4, "fire");
+        map[3][4] = new Wall(3, 3, 1, 1);
+
+        TrappedFloor tf = new TrappedFloor(4, 3, "heal");
+        map[5][5] = new TrappedFloor(4, 3, "stick");
+        map[6][5] = new TrappedFloor(4, 3, "fire");
+        map[2][2] = new Goal(2, 2);
+        
+        map[4][4] = tf;
 
         // add p
         p = new Player(1, 1);
@@ -121,9 +138,14 @@ class GamePanel extends JPanel implements KeyListener {
         }
 
         // draw player body
+
+        
         g.setColor(p.color);
         g.fillRect(p.x * TILE_SIZE, p.y * TILE_SIZE, TILE_SIZE * p.width, TILE_SIZE * p.height);
 
+        g.setColor(Color.white);
+        g.setFont(new Font("Arial", Font.BOLD, TILE_SIZE-1));
+        g.drawString(String.valueOf(p.health), p.x * TILE_SIZE, p.y * TILE_SIZE + TILE_SIZE - 2);
         // draw direction indicator (small square just beyond the bounding box)
         g.setColor(Color.CYAN);
 
@@ -177,7 +199,57 @@ class GamePanel extends JPanel implements KeyListener {
                 System.out.println("Applying effect");
                 map[newY][newX].onStep(p);
             }
+            if(map[p.y][p.x] instanceof Goal){
+                String message = "Congratulations, you've solved the puzzle!";
+                String title = "Puzzle Solved";
+
+                Object[] options = {"Start New Puzzle", "Close"};
+
+                int choice = JOptionPane.showOptionDialog(
+                    null,
+                    message,
+                    title,
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.INFORMATION_MESSAGE,
+                    null,
+                    options,
+                    options[0]  // default button
+                );
+
+                if (choice == 0) {
+                    frame.dispose();  // Closes the current window
+                    GameWindow.startWindow();  // Starts a new game
+                } else {
+                    System.exit(0);  // Exit the whole program
+                }
+            }
             
+        }
+        p.iterateEffects();
+
+        if(p.isDead){
+            String message = "YOU DIED :(";
+            String title = "Death";
+
+            Object[] options = {"Start New Puzzle", "Close"};
+
+            int choice = JOptionPane.showOptionDialog(
+                null,
+                message,
+                title,
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.INFORMATION_MESSAGE,
+                null,
+                options,
+                options[0]  // default button
+            );
+
+            if (choice == 0) {
+                frame.dispose();  // Closes the current window
+                GameWindow.startWindow();  // Starts a new game
+            } else {
+                System.exit(0);  // Exit the whole program
+            }
         }
         repaint();
     }

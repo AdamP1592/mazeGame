@@ -1,8 +1,12 @@
 package gamepkg;
 
+import java.awt.Color;
 class Effect {
     protected String effectType = "None";
     protected int start, end, step;
+    public int numUses = -1;
+
+    public Color color = new Color(100, 100, 100);
 
     protected boolean effectEnded = false;
 
@@ -18,6 +22,7 @@ class Fire extends Effect{
     public Fire(int duration){
         end = duration;
         effectType = "Fire";
+        color = new Color (224, 159, 27);
     }
     @Override
     public void apply(Player p){
@@ -30,34 +35,33 @@ class Fire extends Effect{
         }
     }
 }
-class Push extends Effect{
-    private String direction;
-    public Push(String dir){
-        direction = dir;
+class Stick extends Effect{
+    
+    public Stick(int duration){
+        this.end = duration;
+        effectType = "stick";
+        color = new Color(132, 27, 224);
     }
     @Override
     public void apply(Player p){
-        //catch case if the effectis done and not cleaned up
-        if(effectEnded) return;
-        int newIndex = -1;
-        for(int i = 0; i < p.possibleDirections.length; i++){
-            if(p.possibleDirections[i].equals(direction)){
-                newIndex = i;
-            }
+        if(step >= end){
+            p.moveable = true;
+            this.effectEnded = true;
         }
-        //catch case if invalid direction
-        if(newIndex == -1)return;
-        
-        p.movementIndex = newIndex;
-        p.move(p.getMovement());
-
-        effectEnded = true;
+        else{
+            p.moveable = false;
+            step++;
+        }
     }
 }
 class Heal extends Effect{
     private int health;
-    public Heal(int healAmount){  
+    
+    public Heal(int healAmount){ 
         health = healAmount;
+        effectType = "heal";
+        numUses = 2;
+        color = new Color(224, 27, 27);
     }
     @Override
     public void apply(Player p){

@@ -71,14 +71,14 @@ class Player extends Entity{
         return movementVector;
     }
     public void move(int [] movementVector){
-        iterateEffect();
-        this.x += movementVector[0];
-        this.y += movementVector[1];
+        if(moveable){
+            this.x += movementVector[0];
+            this.y += movementVector[1];
+        }
     }
-    private void iterateEffect(){
+    public void iterateEffects(){
         for(Effect e:activeEffects){
             e.apply(this);
-            System.out.println(health);
         }
         if(health < 0){
             isDead = true;
@@ -102,23 +102,41 @@ class Floor extends Entity{
     
 }
 class TrappedFloor extends Floor{
-    private String[] effects = {"fire", "push"};
+    private String[] effects = {"fire", "stick", "heal"};
     private String effectString;
+    private int numUses;
     public TrappedFloor(int x, int y, String effect){
         super(x, y, 1, 1);
         effectString = effect;
         this.color = new Color(224, 159, 27);
+        
+        setUpEffectParams();
     }
+    public void setUpEffectParams(){
+        Effect[] effectHolder = {new Fire(3), new Stick(1), new Heal(2)};
 
+        //iterates through the effects to find if the given effect is valid
+        for(int i = 0; i < effects.length; i++){
+            if(effects[i].equals(effectString)){
+                //replaces the tile effect
+                Effect e = effectHolder[i];
+                this.numUses = e.numUses;
+                this.color = e.color;
+            }
+        }
+    }
     //returns the effect which can be called by e.apply(Player p)
     public void onStep(Player p){
+        if(numUses == 0) return;
+        
+        numUses--;
         p.addEffect(getEffect());
     }
     public Effect getEffect(){
         Effect e = new Effect();
 
         //creates new holder for each effect type
-        Effect[] effectHolder = {new Fire(3), new Push("n")};
+        Effect[] effectHolder = {new Fire(3), new Stick(1), new Heal(2)};
 
         //iterates through the effects to find if the given effect is valid
         for(int i = 0; i < effects.length; i++){
