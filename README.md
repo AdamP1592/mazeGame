@@ -86,4 +86,4 @@ java -cp compiledFolder gamepkg.GameWindow
 - Incorporate sound effects and enhanced user interface elements.
 
 ## License
-This project is open-source and free for educational use.
+This project is licensed under CC.
