@@ -1,12 +1,15 @@
 package gamepkg;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.awt.Color;
+
 class Entity{
     protected int x, y, width, height;
-
-    protected boolean passable, moveable = false;
+    
+    public boolean passable, moveable = false;
+    public Color color;
     public Entity(int x, int y, int width, int height, boolean passable){
         this.x = x; 
         this.y = y;
@@ -14,19 +17,23 @@ class Entity{
         this.height = height;
 
         this.passable = passable;
+        this.color = new Color(213, 213, 213);
     }
-    
+    public void onStep(Player p){
+
+    }
 }
 class Player extends Entity{
     private int[][] moveArr = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
     public String[] possibleDirections = {"n", "e", "s", "w"};
 
-    private Map<String, Effect> effectMap = new HashMap<>();
     public int movementIndex = 0;
 
     private int[] movement;
 
-    private Effect[] activeEffects;
+    private List<Effect> activeEffects = new ArrayList<>();
+
+    public boolean isDead = false;
     
     int health = 10;
 
@@ -34,16 +41,15 @@ class Player extends Entity{
     int h = 1;
 
     public Player(int x, int y){
-        super(x, y, 2, 1, true);
+        super(x, y, 1, 1, true);
         this.moveable = true;
+        this.color = new Color (73, 173, 162);
         movement = moveArr[movementIndex];
-
-        effectMap.put("fire", new Fire(2, this));
+    
 
     }
-    public void addEffect(int effectType){
-        
-        
+    public void addEffect(Effect e){
+        activeEffects.add(e);
     }
     public void turn(String dir){
 
@@ -53,34 +59,84 @@ class Player extends Entity{
             movementIndex = (movementIndex + moveArr.length - 1) % moveArr.length;
         }
         movement = moveArr[movementIndex];
+        int tempHeight = height;
+
+        height = width;
+        width = tempHeight;
     }
-    public void move(){
-        int tempX, tempY;
-        int[] dir = movement;
-        tempX = dir[0];
-        tempY = dir[1];
+    public int[] getMovement(){
+        int[] movementVector = movement;
+        //possibly apply some effect to the movement vector
 
-        this.x += tempX;
-        this.y += tempY;
-        
-
+        return movementVector;
+    }
+    public void move(int [] movementVector){
+        iterateEffect();
+        this.x += movementVector[0];
+        this.y += movementVector[1];
+    }
+    private void iterateEffect(){
+        for(Effect e:activeEffects){
+            e.apply(this);
+            System.out.println(health);
+        }
+        if(health < 0){
+            isDead = true;
+            color = new Color(168, 50, 68);
+            System.out.println("Ded");
+        }
+        activeEffects.removeIf(e->e.effectEnded);
     }
 }
 
 class Wall extends Entity{
-    
     public Wall(int x, int y, int width, int height){
         super(x, y, width, height, false);
+        this.color = new Color(94, 94, 94);
     }
 }
 class Floor extends Entity{
     public Floor(int x, int y, int width, int height){
         super(x, y, width, height, true);
     }
+    
+}
+class TrappedFloor extends Floor{
+    private String[] effects = {"fire", "push"};
+    private String effectString;
+    public TrappedFloor(int x, int y, String effect){
+        super(x, y, 1, 1);
+        effectString = effect;
+        this.color = new Color(224, 159, 27);
+    }
+
+    //returns the effect which can be called by e.apply(Player p)
+    public void onStep(Player p){
+        p.addEffect(getEffect());
+    }
+    public Effect getEffect(){
+        Effect e = new Effect();
+
+        //creates new holder for each effect type
+        Effect[] effectHolder = {new Fire(3), new Push("n")};
+
+        //iterates through the effects to find if the given effect is valid
+        for(int i = 0; i < effects.length; i++){
+            if(effects[i].equals(effectString)){
+                //replaces the tile effect
+                e = effectHolder[i];
+                return e;
+            }
+        }
+        //returns the default empty effect if there is no valid effect
+        return e;
+    }
 }
 class Goal extends Floor{
     public Goal(int x, int y){
         super(x, y, 1, 1);
+        this.color = new Color(255, 255, 0);
+        moveable = true;
     }
     public void playerEntered(Player p){
         

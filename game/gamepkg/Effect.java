@@ -6,23 +6,21 @@ class Effect {
 
     protected boolean effectEnded = false;
 
-    protected Player p;
     void setupEffect(){
 
     }
-    void apply(){
+    void apply(Player p){
 
     }
 }
 class Fire extends Effect{
     
-    public Fire(int duration, Player player){
+    public Fire(int duration){
         end = duration;
-        p = player;
         effectType = "Fire";
     }
     @Override
-    public void apply(){
+    public void apply(Player p){
         if(step >= end){
             this.effectEnded = true;
         }
@@ -34,12 +32,11 @@ class Fire extends Effect{
 }
 class Push extends Effect{
     private String direction;
-    public Push(Player player, String dir){
+    public Push(String dir){
         direction = dir;
-        p = player;
     }
     @Override
-    public void apply(){
+    public void apply(Player p){
         //catch case if the effectis done and not cleaned up
         if(effectEnded) return;
         int newIndex = -1;
@@ -52,7 +49,7 @@ class Push extends Effect{
         if(newIndex == -1)return;
         
         p.movementIndex = newIndex;
-        p.move();
+        p.move(p.getMovement());
 
         effectEnded = true;
     }
