@@ -8,23 +8,27 @@ import java.util.List;
 import java.util.ArrayList;
 
 
-class mazeGenerator{
+public class mazeGenerator{
     private final int rows, cols;
 
+    private double difficulty = 1.0;
+    public int[] goal = new int[2];
     public int startX, startY;
     private final Entity[][] map;
     private Random rand = new Random();
-
-    public mazeGenerator(int rows, int cols){
+    public mazeGenerator(int rows, int cols, int seed, double difficultyPercent){
+        this.rand = new Random(seed);
         this.rows = rows;
         this.cols = cols;
         this.map = new Entity[rows][cols];
+        this.difficulty = difficultyPercent;
         primsGenerator();
     }
+    public mazeGenerator(int rows, int cols){
+        this(rows, cols, 51421, 1.0);
+    }
     public mazeGenerator(int rows, int cols, int seed){
-        this(rows, cols);
-        this.rand = new Random(seed);
-        primsGenerator();
+        this(rows, cols, seed, 1.0);
     }
     public Entity[][] getMaze(){
         return map;
@@ -91,18 +95,91 @@ class mazeGenerator{
         int[] furthestTile = breadthFirstSeacrch(startX, startY);
         int goalX = furthestTile[0];
         int goalY = furthestTile[1];
+        goal[0] = goalX;
+        goal[1] = goalY;
         map[goalY][goalX] = new Goal(goalX, goalY);
+
+    }
+    private List<List<int[]>> splitList(int splitIndex, List<int[]> originalList){
+        List<int[]> leftList = new ArrayList<>();
+        List<int[]> rightList = new ArrayList<>();
+        List<List<int[]>> combinedLists = new ArrayList<>();
+
+        for(int i = 0; i < splitIndex; i++){
+            leftList.add(originalList.get(i));
+        }
+        for(int i = splitIndex; i < originalList.size(); i++){
+            rightList.add(originalList.get(i));
+        }
+        combinedLists.add(leftList);
+        combinedLists.add(rightList);
+        return combinedLists;
+    }
+    private List<int[]> merge(List<int[]> leftList, List<int[]> rightList){
+        List<int[]> mergedList = new ArrayList<>();
+        int leftIndex = 0;
+        int rightIndex = 0;
+        //since were sorting based on distance and the arr is {x, y, distance}
+        //array index is 2
+        while(leftIndex < leftList.size() && rightIndex < rightList.size()){
+            if(leftList.get(leftIndex)[2] < rightList.get(rightIndex)[2]){
+                mergedList.add(leftList.get(leftIndex));
+                leftIndex++;
+            }
+            else{
+                mergedList.add(rightList.get(rightIndex));
+                rightIndex++;
+            }
+        }
+        while(leftIndex < leftList.size()){
+            mergedList.add(leftList.get(leftIndex));
+            leftIndex++;
+        }
+        while(rightIndex < rightList.size()){
+            mergedList.add(rightList.get(rightIndex));
+            rightIndex++;
+        }
+        return mergedList;
+    }
+    private List<int[]> mergeSortPossiblePaths(List<int[]> possiblePaths){
+        if(possiblePaths.size() <= 1){
+            return possiblePaths;
+        }
+        int middle = possiblePaths.size()/2;
+        List<List<int[]>> combinedLists = splitList(middle, possiblePaths);
+
+        List<int[]> leftList = combinedLists.get(0);
+        List<int[]> rightList = combinedLists.get(1);
+        leftList = mergeSortPossiblePaths(leftList);
+        rightList = mergeSortPossiblePaths(rightList);
+
+        return merge(leftList, rightList);
+
+    }
+
+    private List<int[]> sortPossiblePaths(List<int[]> possiblePaths){
+        List<int[]> sortedPossiblePaths = mergeSortPossiblePaths(possiblePaths);
+        return sortedPossiblePaths;
+
 
     }
     private int[] breadthFirstSeacrch(int startX, int startY){
         Queue<int[]> bfsQueue = new LinkedList<>();
+
+        List<int[]> possiblePaths = new ArrayList<>();
+
+
         bfsQueue.add(new int[]{startX, startY, 0});
 
         boolean[][] searched = new boolean[map.length][map[0].length];
 
         int[] furthestTile = new int[]{startX, startY, 0};
 
+        int maxDistance = 0; 
+        int minDistance = 1;
+
         int[][] directions = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
+        int[][] tileDistances = new int[map.length][map[0].length];
         while(!bfsQueue.isEmpty()){
             //dequeue the current
             int[] currentPos = bfsQueue.poll();
@@ -116,7 +193,7 @@ class mazeGenerator{
                 if(inBounds(newX, newY) &&
                     map[newY][newX].passable && 
                     !searched[newY][newX]){
-
+                    possiblePaths.add(new int[]{newX, newY, newSize});
                     searched[newY][newX] = true;
 
                     if(furthestTile[2] < newSize){
@@ -128,7 +205,26 @@ class mazeGenerator{
                 
             }
         }
-        return furthestTile;
+        possiblePaths = sortPossiblePaths(possiblePaths);
+        /*for(int i = 0; i < possiblePaths.size(); i++){
+            for(int j = 0; j < possiblePaths.get(i).length; j++){
+                System.out.print(possiblePaths.get(i)[j] + " ");
+            }
+            System.out.println();
+        }*/
+        double adjustedDistance = furthestTile[2] * difficulty;
+        int[] startTile = possiblePaths.get(1);
+        for(int i = 1; i < possiblePaths.size(); i++){
+            if(possiblePaths.get(i)[2] >= adjustedDistance){
+                startTile = possiblePaths.get(i - 1);
+                break;
+            }
+        }
+        if(startTile[2] == possiblePaths.get(0)[2]){
+            startTile = possiblePaths.get(1); // force minimum difficulty
+        }
+
+        return startTile;
     }
     private boolean hasExactlyOneAdjacentFloor(int x, int y) {
         int count = 0;

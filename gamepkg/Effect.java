@@ -1,7 +1,7 @@
 package gamepkg;
 
 import java.awt.Color;
-class Effect {
+public class Effect {
     protected String effectType = "None";
     protected int start, end, step;
     public int numUses = -1;

@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.awt.Color;
 
-class Entity{
+public class Entity{
     protected int x, y, width, height;
     
     public boolean passable, moveable = false;
@@ -21,6 +21,10 @@ class Entity{
     }
     public void onStep(Player p){
 
+    }
+    public Effect getEffect(){
+        
+        return new Effect();
     }
 }
 class Player extends Entity{
@@ -128,12 +132,12 @@ class TrappedFloor extends Floor{
     //returns the effect which can be called by e.apply(Player p)
     @Override
     public void onStep(Player p){
-        System.out.println("Adding effect");
         if(numUses == 0) return;
         
         numUses--;
         p.addEffect(getEffect());
     }
+    @Override
     public Effect getEffect(){
         Effect e = new Effect();
 

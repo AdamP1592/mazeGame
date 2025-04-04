@@ -96,7 +96,7 @@ class GamePanel extends JPanel implements KeyListener {
 
     private void primsInit(){
 
-        mazeGenerator m = new mazeGenerator(ROWS, COLS, randomSeed);
+        mazeGenerator m = new mazeGenerator(ROWS, COLS, randomSeed, 1.0);
         map = m.getMaze();
         p = new Player(m.startX, m.startY);
 
