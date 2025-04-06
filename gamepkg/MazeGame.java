@@ -8,13 +8,8 @@ public class MazeGame {
     private int height;
     public int[] goal = new int[2];
 
-    private int maxDistanceValue = 1;
-    private int minDistanceValue = 1;
-
     public Player p;
     public Entity[][] maze;
-
-    
 
     // Constructor
     public MazeGame(int width, int height, int seed, double difficultyPercent) {

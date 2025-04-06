@@ -175,11 +175,7 @@ public class mazeGenerator{
 
         int[] furthestTile = new int[]{startX, startY, 0};
 
-        int maxDistance = 0; 
-        int minDistance = 1;
-
         int[][] directions = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
-        int[][] tileDistances = new int[map.length][map[0].length];
         while(!bfsQueue.isEmpty()){
             //dequeue the current
             int[] currentPos = bfsQueue.poll();
@@ -220,6 +216,7 @@ public class mazeGenerator{
                 break;
             }
         }
+        System.out.println(possiblePaths.get(possiblePaths.size() -1)[2]);
         if(startTile[2] == possiblePaths.get(0)[2]){
             startTile = possiblePaths.get(1); // force minimum difficulty
         }
